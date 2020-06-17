@@ -1,1 +1,1 @@
-web: gunicorn chess_programs_competition.wsgi
+web: gunicorn Chess_Programs_Competition.wsgi

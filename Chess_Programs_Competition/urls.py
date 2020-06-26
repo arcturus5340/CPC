@@ -6,5 +6,6 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('', views.index),
+    path('add_board/', views.add_board),
     path('make_random_move/', views.make_random_move),
 ] + static('static', document_root=settings.STATIC_ROOT)

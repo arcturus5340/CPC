@@ -7,5 +7,5 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('', views.index),
     path('add_board/', views.add_board),
-    path('get_boards/', views.get_boards),
+    path('update_boards/', views.update_boards),
 ] + static('static', document_root=settings.STATIC_ROOT)

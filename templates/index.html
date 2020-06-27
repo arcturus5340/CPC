@@ -8,29 +8,47 @@
 </head>
 <body>
 
-    <a href="/add_board/">Новая доска</a>
+    <button onclick="add_board()">Новая доска</button>
 
     <script src="{% static "jquery/dist/jquery.js" %}"></script>
     <script src="{% static "chess.js/chess.js" %}"></script>
     <script src="{% static "@chrisoakman/chessboardjs/dist/chessboard-1.0.0.js" %}"></script>
 
+    <div id="chess_boards">
     {% for chess_board in ChessBoards %}
-        <div id="board-{{ chess_board }}" style="width: 400px"></div>
+        <div id="board-{{ chess_board }}" style="width: 200px"></div>
     {% endfor %}
+    </div>
 
     <script>
 
+        function add_board(){
+            $.ajax({
+                url: '/add_board/',
+                type: 'POST',
+                data: {
+                    csrfmiddlewaretoken: '{{ csrf_token }}',
+                },
+                success: function(response){
+                    $('#chess_boards').html(response['ChessBoards']);
+                    window.setTimeout(update_boards)
+                },
+                error: function() {
+                }
+            })
+        }
+
         function update_boards(){
             $.ajax({
-                url: '/get_boards/',
+                url: '/update_boards/',
                 type: 'POST',
                 data: {
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                 },
                 success: function(response) {
-                    for (var id in response['ChessBoards']){
-                        console.log(response['ChessBoards'][id]);
-                        Chessboard('board-'+id, response['ChessBoards'][id]);
+                    for (const [id, fen] of Object.entries(response['ChessBoards'])){
+                        console.log(id);
+                        Chessboard('board-'+id, fen);
                         window.setTimeout(update_boards, 1000)
                     }
                 },
@@ -39,7 +57,7 @@
             })
         }
 
-        window.setTimeout(update_boards, 1000)
+        window.setTimeout(update_boards)
 
     </script>
 </body>

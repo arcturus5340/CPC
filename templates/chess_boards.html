@@ -1,3 +1,4 @@
-    {% for chess_board in ChessBoards %}
-        <div id="board-{{ chess_board }}" class="chess_board" style="width: 200px"></div>
-    {% endfor %}
+        <div id="board-{{ chess_board_id }}" class="chess_board" style="width: 200px"></div>
+        <script type="text/javascript">
+            boards[{{ chess_board_id }}] = ChessBoard('board-{{ chess_board_id }}', 'start')
+        </script>

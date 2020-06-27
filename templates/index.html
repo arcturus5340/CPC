@@ -11,12 +11,15 @@
     <button onclick="add_board()">Новая доска</button>
 
     <script src="{% static "jquery/dist/jquery.js" %}"></script>
-    <script src="{% static "chess.js/chess.js" %}"></script>
     <script src="{% static "@chrisoakman/chessboardjs/dist/chessboard-1.0.0.js" %}"></script>
 
     <div id="chess_boards">
+    <script type="text/javascript">let boards = {}</script>
     {% for chess_board in ChessBoards %}
-        <div id="board-{{ chess_board }}" class="chess_board" style="width: 200px"></div>
+        <div id="board-{{ chess_board.0 }}" class="chess_board" style="width: 200px"></div>
+        <script type="text/javascript">
+            boards[{{ chess_board.0 }}] = ChessBoard('board-{{ chess_board.0 }}', '{{ chess_board.1 }}')
+        </script>
     {% endfor %}
     </div>
 
@@ -30,8 +33,7 @@
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                 },
                 success: function(response){
-                    $('#chess_boards').html(response['ChessBoards']);
-                    window.setTimeout(update_boards)
+                    update_boards();
                 },
                 error: function() {
                 }
@@ -46,21 +48,36 @@
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                 },
                 success: function(response) {
-                    chess_board_ids = [];
-                    $('.chess_board').each(function(){ chess_board_ids.push(this.id.slice(6)) });
-                    for (const [id, fen] of Object.entries(response['ChessBoards'])){
-                        Chessboard('board-'+id, fen);
+                    let server_board_ids = Object.keys(response['ChessBoards']);
+                    let local_board_ids = Object.keys(boards);
+                    let new_board_ids = server_board_ids.filter(x => !local_board_ids.includes(x));
+                    new_board_ids.forEach(function(id){
+                        $('#chess_boards').append('<div id="board-'+id+'" class="chess_board" style="width: 200px"></div>');
+                        boards[id] = ChessBoard('board-'+id, {position: 'start', moveSpeed: 'slow'});
+                    });
+
+                    for (const id in response['ChessBoards']){
+                        last_move = response['ChessBoards'][id]['last_move'];
+                        console.log(last_move);
+                        formatted_last_move = last_move.slice(0, 2) + '-' + last_move.slice(2);
+                        console.log(formatted_last_move);
+                        boards[id].move(formatted_last_move);
                     }
-                    let difference = chess_board_ids.filter(x => !Object.keys(response['ChessBoards']).includes(x));
-                    for (const i in difference){
-                        $('#board-'+difference[i]).remove();
-                    }
+
+                    server_board_ids = Object.keys(response['ChessBoards']);
+                    local_board_ids = Object.keys(boards);
+                    let old_board_ids = local_board_ids.filter(x => !server_board_ids.includes(x));
+                    old_board_ids.forEach(function(id){
+                        $('#board-'+id).remove();
+                        delete boards[id];
+                    });
                 },
                 error: function() {
                 }
             })
         }
 
+        update_boards();
         window.setInterval(update_boards, 1000);
 
     </script>

@@ -13,41 +13,34 @@
     <script src="{% static "jquery/dist/jquery.js" %}"></script>
     <script src="{% static "chess.js/chess.js" %}"></script>
     <script src="{% static "@chrisoakman/chessboardjs/dist/chessboard-1.0.0.js" %}"></script>
+
     {% for chess_board in ChessBoards %}
-        <div id="board-{{ chess_board.0 }}" style="width: 400px"></div>
+        <div id="board-{{ chess_board }}" style="width: 400px"></div>
     {% endfor %}
+
     <script>
-        var boards = [];
 
-        config = {
-            position: 'start',
-        };
-
-        {% for chess_board in ChessBoards %}
-            boards.push({'id': {{ chess_board.0 }}, 'board': Chessboard('board-{{ chess_board.0 }}', config)});
-        {% endfor %}
-
-        function makeRandomMove(value){
+        function update_boards(){
             $.ajax({
-                url: '/make_random_move/',
-                type: 'post',
+                url: '/get_boards/',
+                type: 'POST',
                 data: {
-                    id: value['id'],
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                 },
-                success: function(response){
-                    value['board'].position(response['FEN']);
-                    window.setTimeout(makeRandomMove, 500, value);
+                success: function(response) {
+                    for (var id in response['ChessBoards']){
+                        console.log(response['ChessBoards'][id]);
+                        Chessboard('board-'+id, response['ChessBoards'][id]);
+                        window.setTimeout(update_boards, 1000)
+                    }
                 },
-                error: function(){
-                    // TODO: handle the error of sending the ajax-request
-                },
-            });
+                error: function() {
+                }
+            })
         }
 
-        for (var board_index in boards) {
-            window.setTimeout(makeRandomMove, 500, boards[board_index]);
-        }
+        window.setTimeout(update_boards, 1000)
+
     </script>
 </body>
 </html>

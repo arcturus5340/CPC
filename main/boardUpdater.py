@@ -23,5 +23,5 @@ def update_boards():
 
 def start():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(update_boards, 'interval', seconds=2)
+    scheduler.add_job(update_boards, 'interval', seconds=1)
     scheduler.start()

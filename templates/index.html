@@ -16,7 +16,7 @@
 
     <div id="chess_boards">
     {% for chess_board in ChessBoards %}
-        <div id="board-{{ chess_board }}" style="width: 200px"></div>
+        <div id="board-{{ chess_board }}" class="chess_board" style="width: 200px"></div>
     {% endfor %}
     </div>
 
@@ -46,10 +46,14 @@
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                 },
                 success: function(response) {
+                    chess_board_ids = [];
+                    $('.chess_board').each(function(){ chess_board_ids.push(this.id.slice(6)) });
                     for (const [id, fen] of Object.entries(response['ChessBoards'])){
-                        console.log(id);
                         Chessboard('board-'+id, fen);
-                        window.setTimeout(update_boards, 1000)
+                    }
+                    let difference = chess_board_ids.filter(x => !Object.keys(response['ChessBoards']).includes(x));
+                    for (const i in difference){
+                        $('#board-'+difference[i]).remove();
                     }
                 },
                 error: function() {
@@ -57,7 +61,7 @@
             })
         }
 
-        window.setTimeout(update_boards)
+        window.setInterval(update_boards, 1000);
 
     </script>
 </body>

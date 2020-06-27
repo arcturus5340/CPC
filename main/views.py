@@ -17,7 +17,6 @@ def add_board(request):
     response = dict()
     context = {'ChessBoards': ChessBoard.objects.values_list('id', flat=True)}
     response['ChessBoards'] = render_to_string('chess_boards.html', context)
-    print(response['ChessBoards'])
     return HttpResponse(json.dumps(response), content_type='application/json')
 
 

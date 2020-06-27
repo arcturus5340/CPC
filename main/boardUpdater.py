@@ -1,5 +1,3 @@
-from django.db import close_old_connections
-
 import random
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -21,7 +19,6 @@ def update_boards():
         board_obj.fen = board.fen()
         board_obj.last_move = legal_moves[random_index].uci()
         board_obj.save()
-    close_old_connections()
 
 def start():
     scheduler = BackgroundScheduler()

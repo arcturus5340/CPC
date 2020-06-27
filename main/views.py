@@ -22,5 +22,5 @@ def update_boards(request):
     chess_boards = ChessBoard.objects.all()
     response = {'ChessBoards': dict()}
     for board in chess_boards:
-        response['ChessBoards'][board.id] = {'fen': board.fen, 'last_move': board.last_move}
+        response['ChessBoards'][board.id] = board.fen
     return HttpResponse(json.dumps(response), content_type='application/json')

@@ -13,17 +13,10 @@
     <script src="{% static "jquery/dist/jquery.js" %}"></script>
     <script src="{% static "@chrisoakman/chessboardjs/dist/chessboard-1.0.0.js" %}"></script>
 
-    <div id="chess_boards">
-    <script type="text/javascript">let boards = {}</script>
-    {% for chess_board in ChessBoards %}
-        <div id="board-{{ chess_board.0 }}" class="chess_board" style="width: 200px"></div>
-        <script type="text/javascript">
-            boards[{{ chess_board.0 }}] = ChessBoard('board-{{ chess_board.0 }}', '{{ chess_board.1 }}')
-        </script>
-    {% endfor %}
-    </div>
+    <div id="chess_boards"></div>
 
     <script>
+        let boards = {};
 
         function add_board(){
             $.ajax({
@@ -53,15 +46,12 @@
                     let new_board_ids = server_board_ids.filter(x => !local_board_ids.includes(x));
                     new_board_ids.forEach(function(id){
                         $('#chess_boards').append('<div id="board-'+id+'" class="chess_board" style="width: 200px"></div>');
-                        boards[id] = ChessBoard('board-'+id, {position: 'start', moveSpeed: 'slow'});
+                        boards[id] = ChessBoard('board-'+id, {position: response['ChessBoards'][id], moveSpeed: 'slow'});
                     });
 
                     for (const id in response['ChessBoards']){
-                        last_move = response['ChessBoards'][id]['last_move'];
-                        console.log(last_move);
-                        formatted_last_move = last_move.slice(0, 2) + '-' + last_move.slice(2);
-                        console.log(formatted_last_move);
-                        boards[id].move(formatted_last_move);
+                        let current_fen = response['ChessBoards'][id];
+                        boards[id].position(current_fen);
                     }
 
                     server_board_ids = Object.keys(response['ChessBoards']);

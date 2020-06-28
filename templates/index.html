@@ -5,17 +5,49 @@
     <meta charset="UTF-8">
     <title>Title</title>
     <link rel="stylesheet" href="../static/@chrisoakman/chessboardjs/dist/chessboard-1.0.0.css"/>
+    <link rel="stylesheet" href="../static/modal.css"/>
 </head>
 <body>
 
-    <button onclick="add_board()">Новая доска</button>
+    <button onclick="open_new_board_modal()" id="new_board_modal_button">Новая доска</button>
 
     <script src="{% static "jquery/dist/jquery.js" %}"></script>
     <script src="{% static "@chrisoakman/chessboardjs/dist/chessboard-1.0.0.js" %}"></script>
 
     <div id="chess_boards"></div>
 
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+
+         <!-- Modal content -->
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>Some text in the Modal..</p>
+            Белыми играют: <input type="text" name="white" /><br />
+            Черными играют: <input type="text" name="black" /><br />
+            <button onclick="document.getElementById('myModal').style.display='none'; add_board()">Добавить новую доску</button>
+        </div>
+
+    </div>
+
     <script>
+        function open_new_board_modal() {
+            var modal = document.getElementById("myModal");
+            var modal_btn = document.getElementById("new_board_modal_button");
+            var span = document.getElementsByClassName("close")[0];
+            modal_btn.onclick = function() {
+              modal.style.display = "block";
+            };
+            span.onclick = function() {
+              modal.style.display = "none";
+            };
+            window.onclick = function(event) {
+              if (event.target === modal) {
+                modal.style.display = "none";
+              }
+            };
+        }
+
         let boards = {};
 
         function add_board(){
@@ -24,6 +56,8 @@
                 type: 'POST',
                 data: {
                     csrfmiddlewaretoken: '{{ csrf_token }}',
+                    white: $('input[name="white"]').val(),
+                    black: $('input[name="black"]').val(),
                 },
                 success: function(response){
                     update_boards();
@@ -45,7 +79,7 @@
                     let local_board_ids = Object.keys(boards);
                     let new_board_ids = server_board_ids.filter(x => !local_board_ids.includes(x));
                     new_board_ids.forEach(function(id){
-                        $('#chess_boards').append('<div id="board-'+id+'" class="chess_board" style="width: 200px"></div>');
+                        $('#chess_boards').append('<div id="board-'+id+'" class="chess_board" style="width: 200px"></div>'+'<p id="pboard-'+id+'">'+id+'</p>');
                         boards[id] = ChessBoard('board-'+id, {position: response['ChessBoards'][id], moveSpeed: 'slow'});
                     });
 
@@ -59,6 +93,7 @@
                     let old_board_ids = local_board_ids.filter(x => !server_board_ids.includes(x));
                     old_board_ids.forEach(function(id){
                         $('#board-'+id).remove();
+                        $('#pboard-'+id).remove();
                         delete boards[id];
                     });
                 },
@@ -68,7 +103,7 @@
         }
 
         update_boards();
-        window.setInterval(update_boards, 700);
+        window.setInterval(update_boards, 800);
 
     </script>
 </body>

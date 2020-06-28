@@ -1,4 +1,4 @@
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 
 import datetime
@@ -18,8 +18,8 @@ def add_board(request):
     now = datetime.datetime.now()
     date = '[Date "{}"]'.format(now.strftime('%Y.%m.%d'))
     round = '[Round "{}"]'.format('???')
-    white_player = '[White "{}"]'.format('???')
-    black_player = '[Black "{}"]'.format('???')
+    white_player = '[White "{}"]'.format(request.POST.get('white'))
+    black_player = '[Black "{}"]'.format(request.POST.get('black'))
     ChessBoard.objects.create(pgn_meta='\n'.join([event, site, date, round, white_player, black_player]))
     response = dict()
     return HttpResponse(json.dumps(response), content_type='application/json')
@@ -31,3 +31,8 @@ def update_boards(request):
     for board in chess_boards:
         response['ChessBoards'][board.id] = board.fen
     return HttpResponse(json.dumps(response), content_type='application/json')
+
+
+def get_fen(request, board_id):
+    response = {'FEN': ChessBoard.objects.get(id=board_id).fen}
+    return JsonResponse(response, content_type='application/json')

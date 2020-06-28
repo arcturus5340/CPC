@@ -1,7 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render
-from django.template.loader import render_to_string
 
+import datetime
 import json
 
 from main.models import ChessBoard
@@ -13,7 +13,14 @@ def index(request):
 
 
 def add_board(request):
-    ChessBoard.objects.create()
+    event = '[Event "{}"]'.format('???')
+    site = '[Site "{}"]'.format('???')
+    now = datetime.datetime.now()
+    date = '[Date "{}"]'.format(now.strftime('%Y.%m.%d'))
+    round = '[Round "{}"]'.format('???')
+    white_player = '[White "{}"]'.format('???')
+    black_player = '[Black "{}"]'.format('???')
+    ChessBoard.objects.create(pgn_meta='\n'.join([event, site, date, round, white_player, black_player]))
     response = dict()
     return HttpResponse(json.dumps(response), content_type='application/json')
 

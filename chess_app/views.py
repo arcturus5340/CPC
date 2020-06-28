@@ -4,7 +4,7 @@ from django.shortcuts import render
 import datetime
 import json
 
-from main.models import ChessBoard
+from chess_app.models import ChessBoard
 
 
 def index(request):

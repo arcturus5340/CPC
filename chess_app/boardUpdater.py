@@ -3,7 +3,7 @@ import random
 from apscheduler.schedulers.background import BackgroundScheduler
 import chess
 
-from main.models import ChessBoard, PGN
+from chess_app.models import ChessBoard, PGN
 
 
 def update_boards():

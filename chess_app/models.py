@@ -6,6 +6,8 @@ class ChessBoard(models.Model):
     fen = models.TextField(default='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
     moves = models.TextField(default='')
     pgn_meta = models.TextField(default=None)
+    white = models.TextField(default=None)
+    black = models.TextField(default=None)
 
 
 class PGN(models.Model):

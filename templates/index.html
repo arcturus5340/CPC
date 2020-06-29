@@ -25,7 +25,8 @@
             <p>Some text in the Modal..</p>
             Белыми играют: <input type="text" name="white" /><br />
             Черными играют: <input type="text" name="black" /><br />
-            <button onclick="document.getElementById('myModal').style.display='none'; add_board()">Добавить новую доску</button>
+            <p id="modal-hash"></p>
+            <button onclick="add_board()">Добавить новую доску</button>
         </div>
 
     </div>
@@ -60,6 +61,9 @@
                     black: $('input[name="black"]').val(),
                 },
                 success: function(response){
+                    document.getElementById('modal-hash').append(response['white_hash']);
+                    document.getElementById('modal-hash').append('<br />');
+                    document.getElementById('modal-hash').append(response['black_hash']);
                     update_boards();
                 },
                 error: function() {
@@ -103,7 +107,7 @@
         }
 
         update_boards();
-        window.setInterval(update_boards, 800);
+        window.setInterval(update_boards, 650);
 
     </script>
 </body>

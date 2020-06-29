@@ -25,8 +25,8 @@ def add_board(request):
     white_player = '[White "{}"]'.format(request.POST.get('white'))
     black_player = '[Black "{}"]'.format(request.POST.get('black'))
 
-    white_hash = random.getrandbits(64)
-    black_hash = random.getrandbits(64)
+    white_hash = random.getrandbits(32)
+    black_hash = random.getrandbits(32)
     ChessBoard.objects.create(pgn_meta='\n'.join([event, site, date, round, white_player, black_player]),
                               white=white_hash,
                               black=black_hash)

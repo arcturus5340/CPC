@@ -11,5 +11,5 @@ class ChessBoard(models.Model):
 
 
 class PGN(models.Model):
-    id = models.AutoField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     src = models.TextField(default=None)

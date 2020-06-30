@@ -7,6 +7,7 @@ import json
 import random
 
 import chess
+import chess.pgn
 
 from chess_app.models import ChessBoard, PGN
 
@@ -59,9 +60,11 @@ def move(request, player_hash, move_uci):
 
     move = chess.Move.from_uci(move_uci)
     if move in board.legal_moves:
+        old_fen = board_obj.fen
         board.push(move)
         board_obj.fen = board.fen()
-        board_obj.moves += ((board.fen().split()[-1]+'.') if board.fen().split()[1] == 'b' else '') + move_uci + ' '
+        board_obj.moves += (((board.fen().split()[-1]+'.') if board.fen().split()[1] == 'b' else '') +
+                              chess.Board.san(chess.Board(old_fen), move) + ' ')
         board_obj.save()
 
         if board.is_game_over():
@@ -74,14 +77,14 @@ def move(request, player_hash, move_uci):
             board_obj.pgn_meta += '\n[Result "{}"]\n'.format(result)
             ChessBoard.objects.filter(id=board_obj.id).delete()
 
-            new_pgn_obj = PGN.objects.create()
-            new_id = PGN.objects.latest('id').id
-            with open('chess_reports/{}.pgn'.format(new_id), 'w') as file:
+            pgn_src = 'chess_reports/{}.pgn'.format(board_obj.id)
+            new_pgn_obj = PGN.objects.create(id=board_obj.id, src=pgn_src)
+            with open(pgn_src, 'w') as file:
                 file.write(board_obj.pgn_meta)
                 file.write('\n')
                 file.write(board_obj.moves)
                 file.write(result)
-            new_pgn_obj.src = 'chess_reports/{}.pgn'.format(new_id)
+            new_pgn_obj.src = pgn_src
             new_pgn_obj.save()
 
             response['status'] = 'successful'
@@ -92,4 +95,23 @@ def move(request, player_hash, move_uci):
         response['status'] = 'fail'
         response['message'] = 'Invalid move ({})'.format(move_uci)
 
+    return JsonResponse(response)
+
+
+def get_report(request, board_id):
+    report_src = PGN.objects.get(id=board_id).src
+    game = chess.pgn.read_game(open(report_src))
+    report = game.headers
+    moves = [move.uci() for move in game.mainline_moves()]
+    print(moves)
+    response = {
+        'event': report['Event'],
+        'site': report['Site'],
+        'date': report['Date'],
+        'round': report['Round'],
+        'white': report['White'],
+        'black': report['Black'],
+        'result': report['Result'],
+        'half-moves': moves,
+    }
     return JsonResponse(response)

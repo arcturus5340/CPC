@@ -10,4 +10,5 @@ urlpatterns = [
     path('update_boards/', views.update_boards),
     path('get_fen/<int:board_id>', views.get_fen),
     path('move/<int:player_hash>/<str:move_uci>', views.move),
+    path('get_report/<int:board_id>', views.get_report),
 ] + static('static', document_root=settings.STATIC_ROOT)

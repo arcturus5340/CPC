@@ -79,36 +79,40 @@
                     csrfmiddlewaretoken: '{{ csrf_token }}',
                 },
                 success: function(response) {
-                    let server_board_ids = Object.keys(response['ChessBoards']);
-                    let local_board_ids = Object.keys(boards);
-                    let new_board_ids = server_board_ids.filter(x => !local_board_ids.includes(x));
-                    new_board_ids.forEach(function(id){
-                        $('#chess_boards').append('<div id="board-'+id+'" class="chess_board" style="width: 200px"></div>'+'<p id="pboard-'+id+'">'+id+'</p>');
-                        boards[id] = ChessBoard('board-'+id, {position: response['ChessBoards'][id], moveSpeed: 'slow'});
-                    });
+                    if(response['status'] === 'successful'){
+                        let server_board_ids = Object.keys(response['ChessBoards']);
+                        let local_board_ids = Object.keys(boards);
+                        let new_board_ids = server_board_ids.filter(x => !local_board_ids.includes(x));
+                        new_board_ids.forEach(function(id){
+                            $('#chess_boards').append('<div id="board-'+id+'" class="chess_board" style="width: 200px"></div>'+'<p id="pboard-'+id+'">'+id+'</p>');
+                            boards[id] = ChessBoard('board-'+id, {position: response['ChessBoards'][id], moveSpeed: 'slow'});
+                        });
 
-                    for (const id in response['ChessBoards']){
-                        let current_fen = response['ChessBoards'][id];
-                        boards[id].position(current_fen);
+                        for (const id in response['ChessBoards']){
+                            let current_fen = response['ChessBoards'][id];
+                            boards[id].position(current_fen);
+                        }
+
+                        server_board_ids = Object.keys(response['ChessBoards']);
+                        local_board_ids = Object.keys(boards);
+                        let old_board_ids = local_board_ids.filter(x => !server_board_ids.includes(x));
+                        old_board_ids.forEach(function(id){
+                            $('#board-'+id).remove();
+                            $('#pboard-'+id).remove();
+                            delete boards[id];
+                        });
+                    }else if(response['status'] === 'fail'){
+                        {# TODO: handle error by boards updating #}
                     }
-
-                    server_board_ids = Object.keys(response['ChessBoards']);
-                    local_board_ids = Object.keys(boards);
-                    let old_board_ids = local_board_ids.filter(x => !server_board_ids.includes(x));
-                    old_board_ids.forEach(function(id){
-                        $('#board-'+id).remove();
-                        $('#pboard-'+id).remove();
-                        delete boards[id];
-                    });
                 },
                 error: function() {
+                    {# TODO: handle error by boards updating #}
                 }
             })
         }
 
         update_boards();
         window.setInterval(update_boards, 650);
-
     </script>
 </body>
 </html>

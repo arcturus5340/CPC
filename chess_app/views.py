@@ -46,41 +46,53 @@ def add_board(request):
 
 
 def update_boards(request):
-    chess_boards = ChessBoard.objects.all()
-    response = {'ChessBoards': dict()}
-    for board in chess_boards:
-        response['ChessBoards'][board.id] = board.fen
+    response = dict()
+    try:
+        response['ChessBoards'] =  {board.id: board.fen for board in ChessBoard.objects.all()}
+    except Exception:
+        response['status'] = 'fail'
+    else:
+        response['status'] = 'successful'
     return HttpResponse(json.dumps(response), content_type='application/json')
 
 
 def get_fen(request, board_id):
-    response = {'FEN': ChessBoard.objects.get(id=board_id).fen}
-    return JsonResponse(response, content_type='application/json')
+    response = dict()
+    try:
+        response['FEN'] = ChessBoard.objects.get(id=board_id).fen
+    except Exception:
+        response['status'] = 'fail'
+    else:
+        response['status'] = 'successful'
+    return JsonResponse(response)
 
 
 def move(request, player_hash, move_uci):
     response = dict()
-    board_obj = ChessBoard.objects.get(Q(white__exact=player_hash) | Q(black__exact=player_hash))
+    try:
+        board_obj = ChessBoard.objects.get(Q(white__exact=player_hash) | Q(black__exact=player_hash))
+    except Exception:
+        response['status'] = 'fail'
+        response['message'] = 'No user with such hash ({}) was found'.format(player_hash)
+        return JsonResponse(response)
+
     board = chess.Board(board_obj.fen)
-
     move = chess.Move.from_uci(move_uci)
+
     if move in board.legal_moves:
-        old_fen = board_obj.fen
-        board.push(move)
-        board_obj.fen = board.fen()
         pgn_obj = PGN.objects.get(id=board_obj.id)
-        print(pgn_obj.moves)
-        pgn_obj.moves += (((board.fen().split()[-1]+'.') if board.fen().split()[1] == 'b' else '') +
-                            chess.Board.san(chess.Board(old_fen), move) + ' ')
-        pgn_obj.save()
-        board_obj.save()
+        pgn_obj.moves += (((board.fen().split()[-1] + '.') if board.turn == chess.WHITE else '') +
+                          chess.Board.san(chess.Board(board_obj.fen), move) + ' ')
 
+        board.push(move)
         if board.is_game_over():
-            board_obj.result = board.result()
+            pgn_obj.result = board.result()
             ChessBoard.objects.filter(id=board_obj.id).delete()
+        else:
+            board_obj.fen = board.fen()
+            board_obj.save()
 
-            response['status'] = 'successful'
-            return JsonResponse(response)
+        pgn_obj.save()
 
         response['status'] = 'successful'
     else:
@@ -91,15 +103,22 @@ def move(request, player_hash, move_uci):
 
 
 def get_report(request, board_id):
-    pgn_obj = PGN.objects.get(id=board_id)
-    response = {
-        'event': pgn_obj.event,
-        'site': pgn_obj.site,
-        'date': pgn_obj.date,
-        'round': pgn_obj.round,
-        'white': pgn_obj.white,
-        'black': pgn_obj.black,
-        'result': pgn_obj.result,
-        'half-moves': pgn_obj.moves,
-    }
+    response = dict()
+    try:
+        pgn_obj = PGN.objects.get(id=board_id)
+        response['data'] = {
+            'event': pgn_obj.event,
+            'site': pgn_obj.site,
+            'date': pgn_obj.date,
+            'round': pgn_obj.round,
+            'white': pgn_obj.white,
+            'black': pgn_obj.black,
+            'result': pgn_obj.result,
+            'half-moves': pgn_obj.moves,
+        }
+    except Exception:
+        response['status'] = 'fail'
+    else:
+        response['status'] = 'successful'
+
     return JsonResponse(response)

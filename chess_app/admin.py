@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import ChessBoard, PGN
 
-# Register your models here.
+admin.site.register(ChessBoard)
+admin.site.register(PGN)

@@ -18,19 +18,24 @@ def index(request):
 
 
 def add_board(request):
-    event = '[Event "{}"]'.format('???')
-    site = '[Site "{}"]'.format('???')
-    now = datetime.datetime.now()
-    date = '[Date "{}"]'.format(now.strftime('%Y.%m.%d'))
-    round = '[Round "{}"]'.format('???')
-    white_player = '[White "{}"]'.format(request.POST.get('white'))
-    black_player = '[Black "{}"]'.format(request.POST.get('black'))
-
     white_hash = random.getrandbits(32)
     black_hash = random.getrandbits(32)
-    ChessBoard.objects.create(pgn_meta='\n'.join([event, site, date, round, white_player, black_player]),
-                              white=white_hash,
-                              black=black_hash)
+    new_board = ChessBoard.objects.create(
+        white=white_hash,
+        black=black_hash,
+    )
+
+    now = datetime.datetime.now()
+    PGN.objects.create(
+        id=new_board.id,
+        event='???',
+        site='???',
+        date=now.strftime('%Y.%m.%d'),
+        round='???',
+        white=request.POST.get('white'),
+        black=request.POST.get('black'),
+        result='*',
+    )
 
     response = {
         'chess_game_id': ChessBoard.objects.latest('id').id,
@@ -63,29 +68,16 @@ def move(request, player_hash, move_uci):
         old_fen = board_obj.fen
         board.push(move)
         board_obj.fen = board.fen()
-        board_obj.moves += (((board.fen().split()[-1]+'.') if board.fen().split()[1] == 'b' else '') +
-                              chess.Board.san(chess.Board(old_fen), move) + ' ')
+        pgn_obj = PGN.objects.get(id=board_obj.id)
+        print(pgn_obj.moves)
+        pgn_obj.moves += (((board.fen().split()[-1]+'.') if board.fen().split()[1] == 'b' else '') +
+                            chess.Board.san(chess.Board(old_fen), move) + ' ')
+        pgn_obj.save()
         board_obj.save()
 
         if board.is_game_over():
-            white_win = int((board.turn == chess.BLACK) and board.is_variant_loss())
-            black_win = int((board.turn == chess.WHITE) and board.is_variant_loss())
-            if white_win != black_win:
-                result = '{}-{}'.format(white_win, black_win)
-            else:
-                result = '1/2-1/2'
-            board_obj.pgn_meta += '\n[Result "{}"]\n'.format(result)
+            board_obj.result = board.result()
             ChessBoard.objects.filter(id=board_obj.id).delete()
-
-            pgn_src = 'chess_reports/{}.pgn'.format(board_obj.id)
-            new_pgn_obj = PGN.objects.create(id=board_obj.id, src=pgn_src)
-            with open(pgn_src, 'w') as file:
-                file.write(board_obj.pgn_meta)
-                file.write('\n')
-                file.write(board_obj.moves)
-                file.write(result)
-            new_pgn_obj.src = pgn_src
-            new_pgn_obj.save()
 
             response['status'] = 'successful'
             return JsonResponse(response)
@@ -99,19 +91,15 @@ def move(request, player_hash, move_uci):
 
 
 def get_report(request, board_id):
-    report_src = PGN.objects.get(id=board_id).src
-    game = chess.pgn.read_game(open(report_src))
-    report = game.headers
-    moves = [move.uci() for move in game.mainline_moves()]
-    print(moves)
+    pgn_obj = PGN.objects.get(id=board_id)
     response = {
-        'event': report['Event'],
-        'site': report['Site'],
-        'date': report['Date'],
-        'round': report['Round'],
-        'white': report['White'],
-        'black': report['Black'],
-        'result': report['Result'],
-        'half-moves': moves,
+        'event': pgn_obj.event,
+        'site': pgn_obj.site,
+        'date': pgn_obj.date,
+        'round': pgn_obj.round,
+        'white': pgn_obj.white,
+        'black': pgn_obj.black,
+        'result': pgn_obj.result,
+        'half-moves': pgn_obj.moves,
     }
     return JsonResponse(response)
